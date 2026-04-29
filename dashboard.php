@@ -50,5 +50,7 @@ $conn->close();
     <h3 style="margin-top:1.5rem">Produits</h3>
     <div id="admin-products">Chargement...</div>
 </main>
-<script src="js/common.js"></script>
-<script>
+<script src="js/index.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>
