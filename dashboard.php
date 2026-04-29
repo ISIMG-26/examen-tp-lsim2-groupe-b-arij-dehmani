@@ -44,7 +44,7 @@ $conn->close();
         </select>
         <input id="p-image-url" class="form-input" type="url" placeholder="Image URL (optionnel)">
         <input id="p-image-file" class="form-input" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
-        <button class="btn-primary" onclick="addProduct()">Ajouter</button>
+        <button class="btn-primary" onclick="dashAdd()">Ajouter</button>
     </div>
 
     <h3 style="margin-top:1.5rem">Produits</h3>

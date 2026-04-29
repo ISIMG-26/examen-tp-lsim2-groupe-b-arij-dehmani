@@ -51,7 +51,7 @@ if ($action === 'get_produits') {
 if ($action === 'get_categories') {
     $conn = getConnection();
     $result = $conn->query("SELECT * FROM categories ORDER BY nom");
-
+    $categories = $result->fetch_all(MYSQLI_ASSOC);
     echo json_encode(['success' => true, 'categories' => $categories]);
     $conn->close();
     exit;
@@ -137,7 +137,7 @@ if ($action === 'ajouter') {
     // Liste complète pour la table admin.
     $conn = getConnection();
     $result = $conn->query("SELECT p.*, c.nom AS categorie_nom FROM produits p JOIN categories c ON p.categorie_id = c.id ORDER BY p.created_at DESC");
-    
+    $produits = $result->fetch_all(MYSQLI_ASSOC);
     echo json_encode(['success' => true, 'produits' => $produits]);
     $conn->close();
 }
