@@ -64,13 +64,11 @@ if ($action === 'get_categories') {
 
 // -------- ACTIONS ADMIN (POST/GET) --------
 // Tout ce qui modifie le catalogue est restreint à l'admin.
-if (!isAdmin()) {
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' || isset($_GET['action']) || isset($_POST['action'])) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'Non autorisé. Veuillez vous connecter en admin.']);
-        exit;
-    }
-    redirectIfNotAdmin();
+$admin_actions = ['ajouter', 'supprimer', 'modifier_dispo', 'get_all_admin'];
+if (in_array($action, $admin_actions) && !isAdmin()) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'Non autorisé. Veuillez vous connecter en admin.']);
+    exit;
 }
 
 if ($action === 'ajouter') {
