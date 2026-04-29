@@ -52,5 +52,6 @@ $conn->close();
 </main>
 <script src="js/common.js"></script>
 <script src="js/dashboard.js"></script>
+<script src="js/menu.js"></script>
 </body>
 </html>

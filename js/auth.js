@@ -29,7 +29,7 @@ async function authLogin(){
     fd.append('email', email);
     fd.append('password', password);
     try {
-        const res = await fetch('back/auth_handler.php', { method: 'POST', body: fd });
+        const res = await fetch('back/auth_handler.php', { method: 'POST', credentials: 'same-origin', body: fd });
         const data = await res.json();
         if (data.success) {
             authMsg(data.message, true);
@@ -58,7 +58,7 @@ async function authRegister(){
     fd.append('password', password);
     fd.append('confirm', confirm);
     try {
-        const data = await (await fetch('back/auth_handler.php', { method: 'POST', body: fd })).json();
+        const data = await (await fetch('back/auth_handler.php', { method: 'POST', credentials: 'same-origin', body: fd })).json();
         if (data.success) {
             authMsg(data.message, true);
             setTimeout(() => authShowTab('login'), 500);

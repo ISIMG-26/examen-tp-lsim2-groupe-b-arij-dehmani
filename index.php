@@ -64,6 +64,7 @@ $is_admin= isAdmin();
 <script src="js/auth.js"></script>
 <script src="js/dashboard.js"></script>
 <script src="js/menu.js"></script>
+<script src="js/common.js"></script>
 
 
 </body>

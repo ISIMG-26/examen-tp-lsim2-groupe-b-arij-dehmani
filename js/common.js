@@ -9,7 +9,7 @@ function esc(str) {
 function logout() {
     const fd = new FormData();
     fd.append('action', 'deconnexion');
-    fetch('back/auth_handler.php', { method: 'POST', body: fd })
+    fetch('back/auth_handler.php', { method: 'POST', credentials: 'same-origin', body: fd })
         .then((r) => r.json())
         .then((d) => { if (d.success) location.href = 'index.php'; });
 }

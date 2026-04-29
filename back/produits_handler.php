@@ -64,7 +64,14 @@ if ($action === 'get_categories') {
 
 // -------- ACTIONS ADMIN (POST/GET) --------
 // Tout ce qui modifie le catalogue est restreint à l'admin.
-redirectIfNotAdmin();
+if (!isAdmin()) {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' || isset($_GET['action']) || isset($_POST['action'])) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'message' => 'Non autorisé. Veuillez vous connecter en admin.']);
+        exit;
+    }
+    redirectIfNotAdmin();
+}
 
 if ($action === 'ajouter') {
     // Crée un produit depuis le formulaire admin.

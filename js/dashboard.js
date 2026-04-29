@@ -9,35 +9,57 @@ async function dashLoad() {
     const box = document.getElementById('admin-products');
     if (!box) return;
     box.textContent = '…';
-    const d = await (await fetch('back/produits_handler.php?action=get_all_admin')).json();
-    if (!d.success || !d.produits?.length) {
-        box.textContent = 'Aucun produit.';
-        return;
+    try {
+        const res = await fetch('back/produits_handler.php?action=get_all_admin', { credentials: 'same-origin' });
+        const text = await res.text();
+        console.log('Dashboard get_all_admin response', res.status, text);
+        if (!res.ok) {
+            console.error('Dashboard get_all_admin HTTP error', res.status, text);
+            box.textContent = text ? `Erreur serveur (${res.status}) : ${text}` : `Erreur serveur (${res.status})`;
+            return;
+        }
+        let d;
+        try {
+            d = JSON.parse(text);
+        } catch (err) {
+            box.textContent = 'Erreur JSON: réponse invalide';
+            console.error('Dashboard get_all_admin JSON parse error', text);
+            const snippet = text.length > 300 ? text.slice(0, 300) + '...' : text;
+            console.error('Response content:', snippet);
+            return;
+        }
+        if (!d.success || !d.produits?.length) {
+            box.textContent = d.message ? d.message : 'Aucun produit.';
+            return;
+        }
+        const produits = d.produits;
+        box.innerHTML =
+            '<table class="data-table"><thead><tr>' +
+            '<th></th><th>ID</th><th>Nom</th><th>Prix</th><th>Dispo</th><th></th>' +
+            '</tr></thead><tbody>' +
+            produits.map((p) => {
+                const src = imgUrl(p);
+                const thumb = src
+                    ? `<img src="${esc(src)}" alt="" width="44" height="44" style="object-fit:cover;border-radius:8px" loading="lazy">`
+                    : '—';
+                return `<tr><td>${thumb}</td><td>${p.id}</td><td>${esc(p.nom)}</td>` +
+                    `<td>${parseFloat(p.prix).toFixed(2)} €</td>` +
+                    `<td>${String(p.disponible) === '1' ? 'oui' : 'non'}</td>` +
+                    `<td><button type="button" class="btn-secondary" onclick="dashToggle(${p.id},${p.disponible})">On/Off</button> ` +
+                    `<button type="button" class="btn-secondary" onclick="dashDel(${p.id})">Suppr</button></td></tr>`;
+            }).join('') +
+            '</tbody></table>';
+    } catch (err) {
+        box.textContent = 'Erreur réseau ou serveur.';
+        console.error('Dashboard get_all_admin error', err);
     }
-     
-    box.innerHTML =
-        '<table class="data-table"><thead><tr>' +
-        '<th></th><th>ID</th><th>Nom</th><th>Prix</th><th>Dispo</th><th></th>' +
-        '</tr></thead><tbody>' +
-        d.produits.map((p) => {
-            const src = imgUrl(p);
-            const thumb = src
-                ? `<img src="${esc(src)}" alt="" width="44" height="44" style="object-fit:cover;border-radius:8px" loading="lazy">`
-                : '—';
-            return `<tr><td>${thumb}</td><td>${p.id}</td><td>${esc(p.nom)}</td>` +
-                `<td>${parseFloat(p.prix).toFixed(2)} €</td>` +
-                `<td>${String(p.disponible) === '1' ? 'oui' : 'non'}</td>` +
-                `<td><button type="button" class="btn-secondary" onclick="dashToggle(${p.id},${p.disponible})">On/Off</button> ` +
-                `<button type="button" class="btn-secondary" onclick="dashDel(${p.id})">Suppr</button></td></tr>`;
-        }).join('') +
-        '</tbody></table>';
 }
 async function dashToggle(id, cur) {
     const fd = new FormData();
     fd.append('action', 'modifier_dispo');
     fd.append('id', id);
     fd.append('disponible', String(cur) === '1' ? '0' : '1');
-    await fetch('back/produits_handler.php', { method: 'POST', body: fd });
+    await fetch('back/produits_handler.php', { method: 'POST', credentials: 'same-origin', body: fd });
     dashLoad();
 }
 async function dashDel(id) {
@@ -45,7 +67,7 @@ async function dashDel(id) {
     const fd = new FormData();
     fd.append('action', 'supprimer');
     fd.append('id', id);
-    const d = await (await fetch('back/produits_handler.php', { method: 'POST', body: fd })).json();
+    const d = await (await fetch('back/produits_handler.php', { method: 'POST', credentials: 'same-origin', body: fd })).json();
     if (!d.success) return alert(d.message || 'Erreur');
     dashLoad();
 }
@@ -65,7 +87,7 @@ async function dashAdd() {
     fd.append('categorie_id', cat);
     fd.append('image_url', url);
     if (file) fd.append('image', file);
-    const d = await (await fetch('back/produits_handler.php', { method: 'POST', body: fd })).json();
+    const d = await (await fetch('back/produits_handler.php', { method: 'POST', credentials: 'same-origin', body: fd })).json();
     if (!d.success) return alert(d.message || 'Erreur');
     ['p-nom', 'p-prix', 'p-cat', 'p-image-url'].forEach((id) => {
         const e = document.getElementById(id);

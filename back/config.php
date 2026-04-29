@@ -22,7 +22,7 @@ function isLoggedIn(){
 }
 function redirectIfNotAdmin(){
     if (!isAdmin()) {
-        header('Location: ../auth.php');
+        header('Location: auth.php');
         exit;
     }
 }
