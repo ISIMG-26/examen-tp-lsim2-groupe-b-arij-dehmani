@@ -9,28 +9,23 @@ function authShowTab(tab) {
     if (m) { m.className = 'alert'; m.textContent = ''; }
 }
 
-function authMsg(text,ok){
+function authMsg(text, ok) {
     const el = document.getElementById('msg');
-    if(!el) return;
-        el.className = 'alert ' + (ok ? 'alert-success' : 'alert-danger');
-        el.textContent = text;
-    
+    if (!el) return;
+    el.textContent = text;
+    el.className = 'alert show ' + (ok ? 'success' : 'error');
 }
 
-async function authLogin(){
+async function authLogin() {
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value;
-    if(!email || !password){
-        authMsg('Veuillez remplir tous les champs.', false);
-        return;
-    }
+    if (!email || !password) return authMsg('Email et mot de passe requis.', false);
     const fd = new FormData();
     fd.append('action', 'connexion');
     fd.append('email', email);
     fd.append('password', password);
     try {
-        const res = await fetch('back/auth_handler.php', { method: 'POST', credentials: 'same-origin', body: fd });
-        const data = await res.json();
+        const data = await (await fetch('back/auth_handler.php', { method: 'POST', body: fd })).json();
         if (data.success) {
             authMsg(data.message, true);
             setTimeout(() => { location.href = data.redirect; }, 300);
@@ -39,18 +34,17 @@ async function authLogin(){
         authMsg('Erreur réseau.', false);
     }
 }
-async function authRegister(){
-    const prenom = document.getElementById('reg-prenom').value.trim();
-        const nom = document.getElementById('reg-nom').value.trim();
 
+async function authRegister() {
+    const prenom = document.getElementById('reg-prenom').value.trim();
+    const nom = document.getElementById('reg-nom').value.trim();
     const email = document.getElementById('reg-email').value.trim();
     const password = document.getElementById('reg-password').value;
     const confirm = document.getElementById('reg-confirm').value;
-    if(!prenom || !nom || !email || !password || !confirm){
-        authMsg('Veuillez remplir tous les champs.', false);
-        return;
+    if (!prenom || !nom || !email || password.length < 6 || password !== confirm) {
+        return authMsg('Vérifiez les champs.', false);
     }
-     const fd = new FormData();
+    const fd = new FormData();
     fd.append('action', 'inscription');
     fd.append('nom', nom);
     fd.append('prenom', prenom);
@@ -58,7 +52,7 @@ async function authRegister(){
     fd.append('password', password);
     fd.append('confirm', confirm);
     try {
-        const data = await (await fetch('back/auth_handler.php', { method: 'POST', credentials: 'same-origin', body: fd })).json();
+        const data = await (await fetch('back/auth_handler.php', { method: 'POST', body: fd })).json();
         if (data.success) {
             authMsg(data.message, true);
             setTimeout(() => authShowTab('login'), 500);

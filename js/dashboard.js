@@ -20,7 +20,7 @@ async function dashLoad() {
         '<th></th><th>ID</th><th>Nom</th><th>Prix</th><th>Dispo</th><th></th>' +
         '</tr></thead><tbody>' +
         d.produits.map((p) => {
-            
+            const src = imgUrl(p);
             const thumb = src
                 ? `<img src="${esc(src)}" alt="" width="44" height="44" style="object-fit:cover;border-radius:8px" loading="lazy">`
                 : '—';

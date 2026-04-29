@@ -1,8 +1,21 @@
-// Panier (localStorage), panneau latéral, commande, déconnexion.
 /** index.php — panier + menu produits (AJAX) + déconnexion */
+
+function esc(s) {
+    const d = document.createElement('div');
+    d.textContent = s ?? '';
+    return d.innerHTML;
+}
+
+function logout() {
+    const fd = new FormData();
+    fd.append('action', 'deconnexion');
+    fetch('back/auth_handler.php', { method: 'POST', body: fd })
+        .then((r) => r.json())
+        .then((d) => { if (d.success) location.href = 'index.php'; });
+}
+
 let cart = JSON.parse(localStorage.getItem('coffeecart') || '[]');
 let activeCat = '';
-
 
 function saveCart() {
     localStorage.setItem('coffeecart', JSON.stringify(cart));
@@ -21,26 +34,24 @@ function saveCart() {
     if (t) t.textContent = (cart.reduce((s, i) => s + i.prix * i.quantite, 0)).toFixed(2) + ' €';
 }
 
-function q(id,delta){
+function q(id, delta) {
     const it = cart.find((x) => x.id === id);
-    if(!it) return;
+    if (!it) return;
     it.quantite += delta;
-    if(it.quantite <= 0) cart = cart.filter((x) => x.id !== id);
+    if (it.quantite <= 0) cart = cart.filter((x) => x.id !== id);
     saveCart();
 }
+
 function addToCart(id, nom, prix) {
-  const it = cart.find((x) => x.id === id);
-  if (it) {
-    it.quantite++;
-  } else {
-    cart.push({ id, nom, prix, quantite: 1 });
-  }
-  if (it && it.quantite <= 0) cart = cart.filter((x) => x.id !== id);
-  saveCart();
+    const it = cart.find((x) => x.id === id);
+    if (it) it.quantite++;
+    else cart.push({ id, nom, prix: parseFloat(prix), quantite: 1 });
+    saveCart();
 }
+
 function openCart() {
-    document.getElementById('cart-overlay')?.classList.add('open');
     document.getElementById('cart-sidebar')?.classList.add('open');
+    document.getElementById('cart-overlay')?.classList.add('open');
 }
 
 function closeCart() {

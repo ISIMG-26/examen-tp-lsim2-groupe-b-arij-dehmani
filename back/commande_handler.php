@@ -1,32 +1,24 @@
 <?php
-// back/commande_handler.php
-// Endpoint AJAX pour passer une commande et lister les commandes d'un user.
+// JSON : créer une commande (panier JSON) ou lister mes_commandes.
 require_once 'config.php';
-
-// Format JSON attendu par le frontend.
 header('Content-Type: application/json');
-
 $action = $_POST['action'] ?? '';
 
 if ($action === 'passer_commande') {
-    // 1) L'utilisateur doit être connecté (session PHP).
     if (!isLoggedIn()) {
         echo json_encode(['success' => false, 'message' => 'Vous devez être connecté.', 'redirect' => 'auth.php']);
         exit;
     }
 
-    // 2) Le panier arrive en JSON depuis JS -> decode en tableau PHP.
     $panier = json_decode($_POST['panier'] ?? '[]', true);
     if (empty($panier)) {
         echo json_encode(['success' => false, 'message' => 'Panier vide.']);
         exit;
     }
 
-    $conn =getConnection();
+    $conn = getConnection();
     $total = 0;
 
-    // 3) Recalcul serveur du total + vérification disponibilité.
-    // (Le prix client n'est jamais considéré comme source de vérité.)
     foreach ($panier as $item) {
         $stmt = $conn->prepare("SELECT prix FROM produits WHERE id = ? AND disponible = 1");
         $stmt->bind_param("i", $item['id']);
@@ -39,14 +31,12 @@ if ($action === 'passer_commande') {
         $total += $res['prix'] * $item['quantite'];
     }
 
-    // 4) Création de l'entête commande.
     $user_id = $_SESSION['user_id'];
     $stmt = $conn->prepare("INSERT INTO commandes (utilisateur_id, total) VALUES (?, ?)");
     $stmt->bind_param("id", $user_id, $total);
     $stmt->execute();
     $commande_id = $conn->insert_id;
 
-    // 5) Insertion des lignes commande (produit, quantité, prix unitaire).
     foreach ($panier as $item) {
         $stmt = $conn->prepare("SELECT prix FROM produits WHERE id = ?");
         $stmt->bind_param("i", $item['id']);
@@ -62,7 +52,6 @@ if ($action === 'passer_commande') {
     $conn->close();
 
 } elseif ($action === 'mes_commandes') {
-    // Retourne l'historique des commandes de l'utilisateur connecté.
     if (!isLoggedIn()) {
         echo json_encode(['success' => false, 'message' => 'Non connecté.']);
         exit;
@@ -81,4 +70,3 @@ if ($action === 'passer_commande') {
     echo json_encode(['success' => true, 'commandes' => $commandes]);
     $conn->close();
 }
-?>
