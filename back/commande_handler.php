@@ -1,28 +1,32 @@
-<?php 
+<?php
+// back/commande_handler.php
+// Endpoint AJAX pour passer une commande et lister les commandes d'un user.
+require_once 'config.php';
 
-//ekhr point f ajax pour finalement passer la commande 
-require_once 'db.php';
-//format Json pour l front
-
+// Format JSON attendu par le frontend.
 header('Content-Type: application/json');
 
 $action = $_POST['action'] ?? '';
-if ($action === 'passer_commande'){
 
-    if(!isLoggedin()){
-        echo json_encode(['success'=>false,'message'=>'vous devez etre connecter pour passer une commande']);
+if ($action === 'passer_commande') {
+    // 1) L'utilisateur doit être connecté (session PHP).
+    if (!isLoggedIn()) {
+        echo json_encode(['success' => false, 'message' => 'Vous devez être connecté.', 'redirect' => 'auth.php']);
         exit;
     }
 
-    $panier = json_decode($_POST['panier'] ?? '[]', true); //puisque l panier tji en json depuis js je dois le transformer en rtableau pour le stocker dans php 
-    if (empty($panier)){
-        echo json_encode(['success'=>false,'message'=>'votre panier est vide']);
+    // 2) Le panier arrive en JSON depuis JS -> decode en tableau PHP.
+    $panier = json_decode($_POST['panier'] ?? '[]', true);
+    if (empty($panier)) {
+        echo json_encode(['success' => false, 'message' => 'Panier vide.']);
         exit;
     }
 
-    $conn = getConnection();
+    $conn =getConnection();
     $total = 0;
-   //nverifie la disponibilite du produit et je calcule le totale du panier 
+
+    // 3) Recalcul serveur du total + vérification disponibilité.
+    // (Le prix client n'est jamais considéré comme source de vérité.)
     foreach ($panier as $item) {
         $stmt = $conn->prepare("SELECT prix FROM produits WHERE id = ? AND disponible = 1");
         $stmt->bind_param("i", $item['id']);
@@ -34,22 +38,29 @@ if ($action === 'passer_commande'){
         }
         $total += $res['prix'] * $item['quantite'];
     }
-    // je dois inserer la commande dans la bdd avec insert into 
+
+    // 4) Création de l'entête commande.
     $user_id = $_SESSION['user_id'];
     $stmt = $conn->prepare("INSERT INTO commandes (utilisateur_id, total) VALUES (?, ?)");
     $stmt->bind_param("id", $user_id, $total);
     $stmt->execute();
     $commande_id = $conn->insert_id;
 
-    // je dois inserer les details mtaa l commande fl bdd
-    foreach ($panier as $item){
-            $stmt = $conn->prepare("INSERT INTO details_commandes (commande_id, produit_id, quantite) VALUES (?, ?, ?)");
-            $stmt->bind_param("iii", $commande_id, $item['id'], $item['quantite'], $prix);
-            $stmt->execute();
+    // 5) Insertion des lignes commande (produit, quantité, prix unitaire).
+    foreach ($panier as $item) {
+        $stmt = $conn->prepare("SELECT prix FROM produits WHERE id = ?");
+        $stmt->bind_param("i", $item['id']);
+        $stmt->execute();
+        $prix = $stmt->get_result()->fetch_assoc()['prix'];
 
+        $stmt = $conn->prepare("INSERT INTO lignes_commande (commande_id, produit_id, quantite, prix_unitaire) VALUES (?, ?, ?, ?)");
+        $stmt->bind_param("iiid", $commande_id, $item['id'], $item['quantite'], $prix);
+        $stmt->execute();
     }
-    echo json_encode(['success' => true, 'message' => 'Commande passée avec succès.', 'commande_id' => $commande_id]);
+
+    echo json_encode(['success' => true, 'message' => 'Commande passée avec succès ! Merci ☕', 'commande_id' => $commande_id]);
     $conn->close();
+
 } elseif ($action === 'mes_commandes') {
     // Retourne l'historique des commandes de l'utilisateur connecté.
     if (!isLoggedIn()) {
@@ -69,13 +80,5 @@ if ($action === 'passer_commande'){
     $commandes = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     echo json_encode(['success' => true, 'commandes' => $commandes]);
     $conn->close();
-
-
-
-
-
-
-
-
 }
 ?>

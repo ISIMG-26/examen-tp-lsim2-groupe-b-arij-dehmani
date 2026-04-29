@@ -3,6 +3,7 @@
 // Endpoint AJAX unique pour inscription / connexion / déconnexion.
 require_once 'config.php';
 header('Content-Type: application/json'); // on change a json pour etre lu
+
 $action = $_POST['action'] ?? '' // recupere l action de la request post fu front
 
 if ($action ==='inscription'){
@@ -36,10 +37,7 @@ if ($action ==='inscription'){
     $stmt= $conn->prepare("SELECT id FROM utilisateurs WHERE email = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
-    if ($stmt->get_result()->num_rows > 0) {
-        echo json_encode(['success' => false, 'message' => 'Cet email est déjà utilisé.']);
-        exit;
-    }
+    $result= $stmt->get_result();
     if($result->num_rows === 0){
         echo json_encode(['success'=>false,'message'=>'email ou mdp non valide']);
         exit;
@@ -54,6 +52,7 @@ if ($action ==='inscription'){
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['prenom'] = $user['prenom'];
     $_SESSION['nom'] = $user['nom'];
+    $_SESSION['role'] = $user['role'];
 
     $redirect= $user['role'] === 'admin' ? 'dashboard.php' : 'index.php';
     echo json_encode(['success' => true, 'message' => 'Connexion réussie.', 'redirect' => $redirect]);

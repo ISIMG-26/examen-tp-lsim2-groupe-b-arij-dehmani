@@ -32,7 +32,7 @@ CREATE TABLE if NOT EXISTS utilisateurs(
 CREATE TABLE if NOT EXISTS commandes(
     id INT AUTO_INCREMENT PRIMARY KEY,
     utilisateur_id INT NOT NULL,
-    total DECIMAL(8,2) NOT NULL,
+    total DECIMAL(10,2) NOT NULL,
     statut ENUM('en_attente', 'en_cours', 'terminee') DEFAULT 'en_attente',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (utilisateur_id) REFERENCES utilisateurs(id) 
@@ -42,7 +42,7 @@ CREATE TABLE if NOT EXISTS lignes_commandes(
     commande_id INT NOT NULL,
     produit_id INT NOT NULL,
     quantite INT NOT NULL,
-    prix_unitaire DECIMAL(8,2) NOT NULL,
+    prix_unitaire DECIMAL(10,2) NOT NULL,
     FOREIGN KEY (commande_id) REFERENCES commandes(id) ,
     FOREIGN KEY (produit_id) REFERENCES produits(id)
 );
