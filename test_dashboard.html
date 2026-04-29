@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Produits Dashboard</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .result { margin: 20px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        textarea { width: 100%; height: 200px; }
+    </style>
+</head>
+<body>
+<h2>🧪 Test Produits Dashboard</h2>
+
+<div>
+    <h3>Test 1: Récupération des produits admin</h3>
+    <button onclick="testGetProducts()">Tester récupération produits</button>
+</div>
+
+<div>
+    <h3>Résultat:</h3>
+    <div id="result" class="result"></div>
+</div>
+
+<div>
+    <h3>Response JSON:</h3>
+    <textarea id="response"></textarea>
+</div>
+
+<script>
+async function testGetProducts() {
+    const resultDiv = document.getElementById('result');
+    const responseDiv = document.getElementById('response');
+
+    resultDiv.innerHTML = '⏳ Envoi de la requête...';
+
+    try {
+        const res = await fetch('back/produits_handler.php?action=get_all_admin');
+        const text = await res.text();
+        console.log('Status:', res.status);
+        console.log('Response text:', text);
+
+        responseDiv.value = text;
+
+        try {
+            const data = JSON.parse(text);
+            if (data.success) {
+                resultDiv.innerHTML = '<div class="success">✅ Produits récupérés!<br>' + data.produits.length + ' produits trouvés</div>';
+            } else {
+                resultDiv.innerHTML = '<div class="error">❌ Erreur: ' + data.message + '</div>';
+            }
+        } catch (e) {
+            resultDiv.innerHTML = '<div class="error">❌ Erreur JSON parse: ' + e.message + '</div>';
+        }
+    } catch (e) {
+        resultDiv.innerHTML = '<div class="error">❌ Erreur réseau: ' + e.message + '</div>';
+        responseDiv.value = e.message;
+    }
+}
+</script>
+
+</body>
+</html>

@@ -1,17 +1,4 @@
 /** dashboard.php — admin produits (AJAX) + déconnexion */
-
-function logout() {
-    const fd = new FormData();
-    fd.append('action', 'deconnexion');
-    fetch('back/auth_handler.php', { method: 'POST', body: fd })
-        .then((r) => r.json())
-        .then((d) => { if (d.success) location.href = 'index.php'; });
-}
-function esc(str) {
-    const d = document.createElement('div');
-    d.textContent = str ?? '';
-    return d.innerHTML;
-}
 function imgUrl(p) {
     const img = (p.image || '').trim();
     if (!img) return '';

@@ -1,19 +1,5 @@
 // Panier (localStorage), panneau latéral, commande, déconnexion.
 /** index.php — panier + menu produits (AJAX) + déconnexion */
-
-function esc(str) {
-    const d = document.createElement('div');
-    d.textContent = str ?? '';
-    return d.innerHTML;
-}
-
-function logout() {
-    const fd = new FormData();
-    fd.append('action', 'deconnexion');
-    fetch('back/auth_handler.php', { method: 'POST', body: fd })
-        .then((r) => r.json())
-        .then((d) => { if (d.success) location.href = 'index.php'; });
-}
 let cart = JSON.parse(localStorage.getItem('coffeecart') || '[]');
 let activeCat = '';
 
