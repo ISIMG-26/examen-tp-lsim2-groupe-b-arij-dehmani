@@ -61,8 +61,10 @@ $is_admin= isAdmin();
     </div>
 </div>
 
-<script src="js/common.js"></script>
-<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/menu.js"></script>
+
 
 </body>
 </html>
