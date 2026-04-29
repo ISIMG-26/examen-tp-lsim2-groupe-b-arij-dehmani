@@ -1,10 +1,15 @@
 <?php
 // back/produits_handler.php
 // Endpoint AJAX produits/catégories (public) + actions admin (protégées).
-require_once 'config.php';
+
+// Désactiver l'affichage des erreurs pour qu'elles n'interfèrent pas avec JSON
+error_reporting(0);
+ini_set('display_errors', 0);
 
 // Réponse JSON standard pour les appels fetch().
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
+
+require_once 'config.php';
 
 // L'action peut venir en GET (lecture) ou POST (écriture).
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
@@ -106,6 +111,7 @@ if ($action === 'ajouter') {
         echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'ajout.']);
     }
     $conn->close();
+    exit;
 
 } elseif ($action === 'supprimer') {
     // Supprime un produit par id.
@@ -121,6 +127,7 @@ if ($action === 'ajouter') {
         echo json_encode(['success' => false, 'message' => 'Erreur lors de la suppression.']);
     }
     $conn->close();
+    exit;
 
 } elseif ($action === 'modifier_dispo') {
     // Active/Désactive la visibilité produit dans le menu client.
@@ -132,13 +139,23 @@ if ($action === 'ajouter') {
     $stmt->execute();
     echo json_encode(['success' => true]);
     $conn->close();
+    exit;
 
 } elseif ($action === 'get_all_admin') {
     // Liste complète pour la table admin.
     $conn = getConnection();
     $result = $conn->query("SELECT p.*, c.nom AS categorie_nom FROM produits p JOIN categories c ON p.categorie_id = c.id ORDER BY p.created_at DESC");
-    $produits = $result->fetch_all(MYSQLI_ASSOC);
-    echo json_encode(['success' => true, 'produits' => $produits]);
+    
+    if ($result) {
+        $produits = $result->fetch_all(MYSQLI_ASSOC);
+        echo json_encode(['success' => true, 'produits' => $produits]);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Erreur requête']);
+    }
     $conn->close();
+    exit;
+} else {
+    echo json_encode(['success' => false, 'message' => 'Action non reconnue']);
+    exit;
 }
 ?>
