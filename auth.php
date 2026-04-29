@@ -25,7 +25,7 @@ if (isLoggedIn()) {
     <div id="login-box" class="auth-form active">
         <input id="login-email" class="form-input" type="email" placeholder="email">
         <input id="login-password" class="form-input" type="password" placeholder="password">
-        <button class="btn-primary btn-full" onclick="handleLogin()">Se connecter</button>
+        <button class="btn-primary btn-full" onclick="authLogin()">Se connecter</button>
     </div>
 
     <div id="register-box" class="auth-form">
@@ -34,11 +34,12 @@ if (isLoggedIn()) {
         <input id="reg-email" class="form-input" type="email" placeholder="email">
         <input id="reg-password" class="form-input" type="password" placeholder="password (min 6)">
         <input id="reg-confirm" class="form-input" type="password" placeholder="confirm password">
-        <button class="btn-primary btn-full" onclick="handleRegister()">Creer compte</button>
+        <button class="btn-primary btn-full" onclick="authRegister()">Creer compte</button>
     </div>
     <p><a href="index.php">Retour menu</a></p>
 </div></div>
 
+<script src="js/auth.js"></script>
 <script>
 function showTab(tab) {
     // Change d'onglet login/register et nettoie le message d'état.
@@ -115,6 +116,7 @@ async function handleRegister() {
         showMsg('Erreur reseau.', false);
     }
 }
+</script>
 </script>
 </body>
 </html>

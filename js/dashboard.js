@@ -1,106 +1,91 @@
-// Menu client : catégories, recherche, grille produits (API publique).
-let catalogProducts = [];
-let selectedCategoryId = null;
-let searchDebounce = null;
+/** dashboard.php — admin produits (AJAX) + déconnexion */
 
+function logout() {
+    const fd = new FormData();
+    fd.append('action', 'deconnexion');
+    fetch('back/auth_handler.php', { method: 'POST', body: fd })
+        .then((r) => r.json())
+        .then((d) => { if (d.success) location.href = 'index.php'; });
+}
 function esc(str) {
-  const d = document.createElement('div');
-  d.textContent = str ?? '';
-  return d.innerHTML;
+    const d = document.createElement('div');
+    d.textContent = str ?? '';
+    return d.innerHTML;
 }
-
-async function fetchJSON(url) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  return res.json();
+function imgUrl(p) {
+    const img = (p.image || '').trim();
+    if (!img) return '';
+    if (img.startsWith('http')) return img;
+    return 'images/' + img.replace(/^\/+/, '');
 }
-
-async function loadCategories() {
-  const bar = document.getElementById('categories-bar');
-  if (!bar) return;
-  try {
-    const data = await fetchJSON('back/produits_handler.php?action=get_categories');
-    if (!data.success) throw new Error();
-    const cats = data.categories || [];
-    bar.innerHTML = [
-      '<button type="button" class="cat-btn active" data-id="">Tous</button>',
-      ...cats.map(
-        (c) =>
-          `<button type="button" class="cat-btn" data-id="${Number(c.id)}">${esc(c.nom)}</button>`
-      ),
-    ].join('');
-    bar.querySelectorAll('.cat-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        bar.querySelectorAll('.cat-btn').forEach((b) => b.classList.remove('active'));
-        btn.classList.add('active');
-        const raw = btn.getAttribute('data-id');
-        selectedCategoryId = raw === '' || raw === null ? null : raw;
-        loadProducts();
-      });
-    });
-  } catch {
-    bar.innerHTML = '<p>Impossible de charger les catégories.</p>';
-  }
-}
-
-async function loadProducts() {
-  const grid = document.getElementById('products-grid');
-  if (!grid) return;
-  grid.textContent = 'Chargement...';
-  const params = new URLSearchParams({ action: 'get_produits' });
-  if (selectedCategoryId) params.set('categorie_id', String(selectedCategoryId));
-  const q = document.getElementById('search-input')?.value.trim();
-  if (q) params.set('search', q);
-  try {
-    const data = await fetchJSON('back/produits_handler.php?' + params.toString());
-    if (!data.success) throw new Error();
-    const list = data.produits || [];
-    catalogProducts = list;
-    if (!list.length) {
-      grid.innerHTML = '<p>Aucun produit pour ce filtre.</p>';
-      return;
+async function dashLoad() {
+    const box = document.getElementById('admin-products');
+    if (!box) return;
+    box.textContent = '…';
+    const d = await (await fetch('back/produits_handler.php?action=get_all_admin')).json();
+    if (!d.success || !d.produits?.length) {
+        box.textContent = 'Aucun produit.';
+        return;
     }
-    grid.innerHTML = list
-      .map((p) => {
-        const img = esc(p.image || '');
-        const nom = esc(p.nom || '');
-        const descRaw = (p.description || '').slice(0, 140);
-        const desc = esc(descRaw);
-        const prix = parseFloat(p.prix).toFixed(2);
-        const catLabel = p.categorie_nom ? esc(p.categorie_nom) : '';
-        return `<article class="product-card">
-        <img src="${img}" alt="" style="width:100%;height:150px;object-fit:cover;border-radius:12px 12px 0 0;display:block" loading="lazy">
-        <div class="product-body">
-          <div class="product-name">${nom}</div>
-          <div class="product-desc">${catLabel ? `<span style="opacity:.85">${catLabel}</span> — ` : ''}${desc}</div>
-          <div class="product-footer">
-            <span class="product-price">${prix} €</span>
-            <button type="button" class="add-to-cart-btn" title="Ajouter au panier" data-id="${Number(p.id)}">+</button>
-          </div>
-        </div>
-      </article>`;
-      })
-      .join('');
-  } catch {
-    grid.innerHTML = '<p>Impossible de charger les produits.</p>';
-    catalogProducts = [];
-  }
+     
+    box.innerHTML =
+        '<table class="data-table"><thead><tr>' +
+        '<th></th><th>ID</th><th>Nom</th><th>Prix</th><th>Dispo</th><th></th>' +
+        '</tr></thead><tbody>' +
+        d.produits.map((p) => {
+            const src = imgUrl(p);
+            const thumb = src
+                ? `<img src="${esc(src)}" alt="" width="44" height="44" style="object-fit:cover;border-radius:8px" loading="lazy">`
+                : '—';
+            return `<tr><td>${thumb}</td><td>${p.id}</td><td>${esc(p.nom)}</td>` +
+                `<td>${parseFloat(p.prix).toFixed(2)} €</td>` +
+                `<td>${String(p.disponible) === '1' ? 'oui' : 'non'}</td>` +
+                `<td><button type="button" class="btn-secondary" onclick="dashToggle(${p.id},${p.disponible})">On/Off</button> ` +
+                `<button type="button" class="btn-secondary" onclick="dashDel(${p.id})">Suppr</button></td></tr>`;
+        }).join('') +
+        '</tbody></table>';
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-  const grid = document.getElementById('products-grid');
-  grid?.addEventListener('click', (e) => {
-    const btn = e.target.closest('.add-to-cart-btn');
-    if (!btn || !grid.contains(btn)) return;
-    const id = parseInt(btn.getAttribute('data-id'), 10);
-    const p = catalogProducts.find((x) => Number(x.id) === id);
-    if (p) addToCart({ id: p.id, nom: p.nom, prix: parseFloat(p.prix) });
-  });
-
-  document.getElementById('search-input')?.addEventListener('input', () => {
-    clearTimeout(searchDebounce);
-    searchDebounce = setTimeout(loadProducts, 300);
-  });
-
-  loadCategories().then(() => loadProducts());
-});
+async function dashToggle(id, cur) {
+    const fd = new FormData();
+    fd.append('action', 'modifier_dispo');
+    fd.append('id', id);
+    fd.append('disponible', String(cur) === '1' ? '0' : '1');
+    await fetch('back/produits_handler.php', { method: 'POST', body: fd });
+    dashLoad();
+}
+async function dashDel(id) {
+    if (!confirm('Supprimer ?')) return;
+    const fd = new FormData();
+    fd.append('action', 'supprimer');
+    fd.append('id', id);
+    const d = await (await fetch('back/produits_handler.php', { method: 'POST', body: fd })).json();
+    if (!d.success) return alert(d.message || 'Erreur');
+    dashLoad();
+}
+async function dashAdd() {
+    const nom = document.getElementById('p-nom').value.trim();
+    const prix = parseFloat(document.getElementById('p-prix').value);
+    const cat = document.getElementById('p-cat').value;
+    const url = document.getElementById('p-image-url').value.trim();
+    const file = document.getElementById('p-image-file').files?.[0];
+    if (!nom || !prix || !cat) return alert('Nom, prix et catégorie requis.');
+    const fd = new FormData();
+    fd.append('action', 'ajouter');
+    fd.append('nom', nom);
+    fd.append('description', '');
+    fd.append('prix', String(prix));
+    fd.append('stock', '100');
+    fd.append('categorie_id', cat);
+    fd.append('image_url', url);
+    if (file) fd.append('image', file);
+    const d = await (await fetch('back/produits_handler.php', { method: 'POST', body: fd })).json();
+    if (!d.success) return alert(d.message || 'Erreur');
+    ['p-nom', 'p-prix', 'p-cat', 'p-image-url'].forEach((id) => {
+        const e = document.getElementById(id);
+        if (e) e.value = '';
+    });
+    const f = document.getElementById('p-image-file');
+    if (f) f.value = '';
+    dashLoad();
+}
+document.addEventListener('DOMContentLoaded', dashLoad);

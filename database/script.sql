@@ -58,10 +58,8 @@ INSERT INTO categories (nom, description, icone) VALUES
 INSERT INTO produits (nom, description, prix, categorie_id, image) VALUES
 ('Espresso', 'Café intense et pur, extraction parfaite', 2.50, 1, 'https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?w=400&q=80'),
 ('Cappuccino', 'Espresso avec mousse de lait crémeuse', 3.80, 1, 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=400&q=80'),
-('Latte Caramel', 'Latte doux avec sirop caramel maison', 4.50, 1, 'https://images.unsplash.com/photo-1561882468-9110d70a79cd?w=400&q=80'),
 ('Café Noisette', 'Espresso allongé avec une touche de lait', 3.20, 1, 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&q=80'),
 ('Cold Brew', 'Café infusé à froid pendant 12h', 4.80, 2, 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=400&q=80'),
-('Frappé Vanille', 'Café glacé mixé avec crème vanille', 5.50, 2, 'https://images.unsplash.com/photo-1572490122747-3e9ac5d91c6e?w=400&q=80'),
 ('Matcha Latte Froid', 'Matcha japonais premium sur glace', 5.20, 2, 'https://images.unsplash.com/photo-1515823064-d6e0c04616a7?w=400&q=80'),
 ('Croissant Beurre', 'Croissant feuilleté fait maison chaque matin', 2.80, 3, 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400&q=80'),
 ('Muffin Myrtilles', 'Muffin moelleux aux myrtilles fraîches', 3.20, 3, 'https://images.unsplash.com/photo-1607958996333-41aef7caefaa?w=400&q=80'),

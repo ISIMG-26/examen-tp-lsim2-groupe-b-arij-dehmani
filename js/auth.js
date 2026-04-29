@@ -11,13 +11,13 @@ function authShowTab(tab) {
 
 function authMsg(text,ok){
     const el = document.getElementById('msg');
-    if(el) return;
+    if(!el) return;
         el.className = 'alert ' + (ok ? 'alert-success' : 'alert-danger');
         el.textContent = text;
     
 }
 
-asyc function authLogin(){
+async function authLogin(){
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value;
     if(!email || !password){
@@ -25,11 +25,12 @@ asyc function authLogin(){
         return;
     }
     const fd = new FormData();
-    fd.append('action', 'login');
+    fd.append('action', 'connexion');
     fd.append('email', email);
     fd.append('password', password);
     try {
-        const res = await fetch('back/auth_handler.php', { method: 'POST', body: fd }).json();
+        const res = await fetch('back/auth_handler.php', { method: 'POST', body: fd });
+        const data = await res.json();
         if (data.success) {
             authMsg(data.message, true);
             setTimeout(() => { location.href = data.redirect; }, 300);
