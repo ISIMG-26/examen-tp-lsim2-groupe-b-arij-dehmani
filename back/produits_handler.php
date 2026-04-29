@@ -1,21 +1,12 @@
 <?php
 // back/produits_handler.php
-// Endpoint AJAX produits/catégories (public) + actions admin (protégées).
-
-// Désactiver l'affichage des erreurs pour qu'elles n'interfèrent pas avec JSON
-error_reporting(0);
-ini_set('display_errors', 0);
-
-// Réponse JSON standard pour les appels fetch().
-header('Content-Type: application/json; charset=utf-8');
-
 require_once 'config.php';
 
-// L'action peut venir en GET (lecture) ou POST (écriture).
+header('Content-Type: application/json');
+
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
-// -------- ACTIONS PUBLIQUES (GET) --------
-// Retourne les produits visibles avec filtre catégorie + recherche texte.
+// GET: récupérer produits (public)
 if ($action === 'get_produits') {
     $conn = getConnection();
     $categorie_id = $_GET['categorie_id'] ?? null;
@@ -41,7 +32,6 @@ if ($action === 'get_produits') {
 
     $stmt = $conn->prepare($sql);
     if ($params) {
-        // Liaison dynamique des paramètres pour garder la requête sécurisée.
         $stmt->bind_param($types, ...$params);
     }
     $stmt->execute();
@@ -52,7 +42,7 @@ if ($action === 'get_produits') {
     exit;
 }
 
-// Retourne toutes les catégories pour construire les filtres côté UI.
+// GET: récupérer catégories (public)
 if ($action === 'get_categories') {
     $conn = getConnection();
     $result = $conn->query("SELECT * FROM categories ORDER BY nom");
@@ -62,17 +52,10 @@ if ($action === 'get_categories') {
     exit;
 }
 
-// -------- ACTIONS ADMIN (POST/GET) --------
-// Tout ce qui modifie le catalogue est restreint à l'admin.
-$admin_actions = ['ajouter', 'supprimer', 'modifier_dispo', 'get_all_admin'];
-if (in_array($action, $admin_actions) && !isAdmin()) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Non autorisé. Veuillez vous connecter en admin.']);
-    exit;
-}
+// Actions admin uniquement
+redirectIfNotAdmin();
 
 if ($action === 'ajouter') {
-    // Crée un produit depuis le formulaire admin.
     $nom = trim($_POST['nom'] ?? '');
     $description = trim($_POST['description'] ?? '');
     $prix = floatval($_POST['prix'] ?? 0);
@@ -84,10 +67,7 @@ if ($action === 'ajouter') {
         exit;
     }
 
-    // Gestion image avec priorité:
-    // 1) URL saisie par admin
-    // 2) fichier uploadé
-    // 3) image par défaut
+    // Gestion image (URL ou upload fichier)
     $image = 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&q=80'; // défaut
     
     // Priorité 1 : URL fournie
@@ -99,13 +79,11 @@ if ($action === 'ajouter') {
         $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
         $allowed = ['jpg','jpeg','png','webp'];
         if (in_array(strtolower($ext), $allowed)) {
-            // Nom unique pour éviter collisions de fichiers.
             $image = uniqid() . '.' . $ext;
             move_uploaded_file($_FILES['image']['tmp_name'], '../images/' . $image);
         }
     }
 
-    // Insertion produit en DB.
     $conn = getConnection();
     $stmt = $conn->prepare("INSERT INTO produits (nom, description, prix, categorie_id, stock, image) VALUES (?, ?, ?, ?, ?, ?)");
     $stmt->bind_param("ssdiis", $nom, $description, $prix, $categorie_id, $stock, $image);
@@ -116,10 +94,8 @@ if ($action === 'ajouter') {
         echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'ajout.']);
     }
     $conn->close();
-    exit;
 
 } elseif ($action === 'supprimer') {
-    // Supprime un produit par id.
     $id = intval($_POST['id'] ?? 0);
     if (!$id) { echo json_encode(['success' => false, 'message' => 'ID invalide.']); exit; }
 
@@ -132,10 +108,8 @@ if ($action === 'ajouter') {
         echo json_encode(['success' => false, 'message' => 'Erreur lors de la suppression.']);
     }
     $conn->close();
-    exit;
 
 } elseif ($action === 'modifier_dispo') {
-    // Active/Désactive la visibilité produit dans le menu client.
     $id = intval($_POST['id'] ?? 0);
     $dispo = intval($_POST['disponible'] ?? 1);
     $conn = getConnection();
@@ -144,23 +118,12 @@ if ($action === 'ajouter') {
     $stmt->execute();
     echo json_encode(['success' => true]);
     $conn->close();
-    exit;
 
 } elseif ($action === 'get_all_admin') {
-    // Liste complète pour la table admin.
     $conn = getConnection();
     $result = $conn->query("SELECT p.*, c.nom AS categorie_nom FROM produits p JOIN categories c ON p.categorie_id = c.id ORDER BY p.created_at DESC");
-    
-    if ($result) {
-        $produits = $result->fetch_all(MYSQLI_ASSOC);
-        echo json_encode(['success' => true, 'produits' => $produits]);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Erreur requête']);
-    }
+    $produits = $result->fetch_all(MYSQLI_ASSOC);
+    echo json_encode(['success' => true, 'produits' => $produits]);
     $conn->close();
-    exit;
-} else {
-    echo json_encode(['success' => false, 'message' => 'Action non reconnue']);
-    exit;
 }
 ?>
