@@ -1,12 +1,9 @@
 <?php
-// back/produits_handler.php
+// JSON : liste produits/catégories (public) ; ajout/suppr/dispo/liste admin (après redirectIfNotAdmin).
 require_once 'config.php';
-
 header('Content-Type: application/json');
-
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
-// GET: récupérer produits (public)
 if ($action === 'get_produits') {
     $conn = getConnection();
     $categorie_id = $_GET['categorie_id'] ?? null;
@@ -35,24 +32,20 @@ if ($action === 'get_produits') {
         $stmt->bind_param($types, ...$params);
     }
     $stmt->execute();
-    $result = $stmt->get_result();
-    $produits = $result->fetch_all(MYSQLI_ASSOC);
+    $produits = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     echo json_encode(['success' => true, 'produits' => $produits]);
     $conn->close();
     exit;
 }
 
-// GET: récupérer catégories (public)
 if ($action === 'get_categories') {
     $conn = getConnection();
-    $result = $conn->query("SELECT * FROM categories ORDER BY nom");
-    $categories = $result->fetch_all(MYSQLI_ASSOC);
+    $categories = $conn->query("SELECT * FROM categories ORDER BY nom")->fetch_all(MYSQLI_ASSOC);
     echo json_encode(['success' => true, 'categories' => $categories]);
     $conn->close();
     exit;
 }
 
-// Actions admin uniquement
 redirectIfNotAdmin();
 
 if ($action === 'ajouter') {
@@ -67,17 +60,12 @@ if ($action === 'ajouter') {
         exit;
     }
 
-    // Gestion image (URL ou upload fichier)
-    $image = 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&q=80'; // défaut
-    
-    // Priorité 1 : URL fournie
+    $image = 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&q=80';
     if (!empty($_POST['image_url']) && filter_var($_POST['image_url'], FILTER_VALIDATE_URL)) {
         $image = trim($_POST['image_url']);
-    }
-    // Priorité 2 : fichier uploadé
-    elseif (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
+    } elseif (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
         $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
-        $allowed = ['jpg','jpeg','png','webp'];
+        $allowed = ['jpg', 'jpeg', 'png', 'webp'];
         if (in_array(strtolower($ext), $allowed)) {
             $image = uniqid() . '.' . $ext;
             move_uploaded_file($_FILES['image']['tmp_name'], '../images/' . $image);
@@ -97,7 +85,10 @@ if ($action === 'ajouter') {
 
 } elseif ($action === 'supprimer') {
     $id = intval($_POST['id'] ?? 0);
-    if (!$id) { echo json_encode(['success' => false, 'message' => 'ID invalide.']); exit; }
+    if (!$id) {
+        echo json_encode(['success' => false, 'message' => 'ID invalide.']);
+        exit;
+    }
 
     $conn = getConnection();
     $stmt = $conn->prepare("DELETE FROM produits WHERE id = ?");
@@ -121,9 +112,7 @@ if ($action === 'ajouter') {
 
 } elseif ($action === 'get_all_admin') {
     $conn = getConnection();
-    $result = $conn->query("SELECT p.*, c.nom AS categorie_nom FROM produits p JOIN categories c ON p.categorie_id = c.id ORDER BY p.created_at DESC");
-    $produits = $result->fetch_all(MYSQLI_ASSOC);
+    $produits = $conn->query("SELECT p.*, c.nom AS categorie_nom FROM produits p JOIN categories c ON p.categorie_id = c.id ORDER BY p.created_at DESC")->fetch_all(MYSQLI_ASSOC);
     echo json_encode(['success' => true, 'produits' => $produits]);
     $conn->close();
 }
-?>

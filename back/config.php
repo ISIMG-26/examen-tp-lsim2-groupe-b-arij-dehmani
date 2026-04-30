@@ -1,12 +1,12 @@
 <?php
-// back/config.php - Connexion à la base de données
+// BDD + session (utilisé par toutes les pages PHP).
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 define('DB_NAME', 'coffeeshop');
 
 function getConnection() {
-    $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);//creation d un de connexion a la base de données oop constructeur de la classe mysqli
+    $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
     if ($conn->connect_error) {
         die(json_encode(['error' => 'Connexion échouée: ' . $conn->connect_error]));
     }
@@ -14,7 +14,6 @@ function getConnection() {
     return $conn;
 }
 
-// Démarrer la session si pas déjà démarrée
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -33,4 +32,3 @@ function redirectIfNotAdmin() {
         exit;
     }
 }
-?>

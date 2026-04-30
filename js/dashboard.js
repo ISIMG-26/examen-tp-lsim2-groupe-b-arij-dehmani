@@ -1,4 +1,19 @@
 /** dashboard.php — admin produits (AJAX) + déconnexion */
+
+function logout() {
+    const fd = new FormData();
+    fd.append('action', 'deconnexion');
+    fetch('back/auth_handler.php', { method: 'POST', body: fd })
+        .then((r) => r.json())
+        .then((d) => { if (d.success) location.href = 'index.php'; });
+}
+
+function esc(str) {
+    const d = document.createElement('div');
+    d.textContent = str ?? '';
+    return d.innerHTML;
+}
+
 function imgUrl(p) {
     const img = (p.image || '').trim();
     if (!img) return '';
@@ -32,23 +47,26 @@ async function dashLoad() {
         }).join('') +
         '</tbody></table>';
 }
+
 async function dashToggle(id, cur) {
     const fd = new FormData();
     fd.append('action', 'modifier_dispo');
     fd.append('id', id);
     fd.append('disponible', String(cur) === '1' ? '0' : '1');
-    await fetch('back/produits_handler.php', { method: 'POST', credentials: 'same-origin', body: fd });
+    await fetch('back/produits_handler.php', { method: 'POST', body: fd });
     dashLoad();
 }
+
 async function dashDel(id) {
     if (!confirm('Supprimer ?')) return;
     const fd = new FormData();
     fd.append('action', 'supprimer');
     fd.append('id', id);
-    const d = await (await fetch('back/produits_handler.php', { method: 'POST', credentials: 'same-origin', body: fd })).json();
+    const d = await (await fetch('back/produits_handler.php', { method: 'POST', body: fd })).json();
     if (!d.success) return alert(d.message || 'Erreur');
     dashLoad();
 }
+
 async function dashAdd() {
     const nom = document.getElementById('p-nom').value.trim();
     const prix = parseFloat(document.getElementById('p-prix').value);
@@ -65,7 +83,7 @@ async function dashAdd() {
     fd.append('categorie_id', cat);
     fd.append('image_url', url);
     if (file) fd.append('image', file);
-    const d = await (await fetch('back/produits_handler.php', { method: 'POST', credentials: 'same-origin', body: fd })).json();
+    const d = await (await fetch('back/produits_handler.php', { method: 'POST', body: fd })).json();
     if (!d.success) return alert(d.message || 'Erreur');
     ['p-nom', 'p-prix', 'p-cat', 'p-image-url'].forEach((id) => {
         const e = document.getElementById(id);
@@ -75,4 +93,5 @@ async function dashAdd() {
     if (f) f.value = '';
     dashLoad();
 }
+
 document.addEventListener('DOMContentLoaded', dashLoad);

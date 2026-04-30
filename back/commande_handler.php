@@ -1,9 +1,7 @@
 <?php
-// back/commande_handler.php
+// JSON : créer une commande (panier JSON) ou lister mes_commandes.
 require_once 'config.php';
-
 header('Content-Type: application/json');
-
 $action = $_POST['action'] ?? '';
 
 if ($action === 'passer_commande') {
@@ -21,7 +19,6 @@ if ($action === 'passer_commande') {
     $conn = getConnection();
     $total = 0;
 
-    // Calculer total & vérifier produits
     foreach ($panier as $item) {
         $stmt = $conn->prepare("SELECT prix FROM produits WHERE id = ? AND disponible = 1");
         $stmt->bind_param("i", $item['id']);
@@ -34,14 +31,12 @@ if ($action === 'passer_commande') {
         $total += $res['prix'] * $item['quantite'];
     }
 
-    // Créer commande
     $user_id = $_SESSION['user_id'];
     $stmt = $conn->prepare("INSERT INTO commandes (utilisateur_id, total) VALUES (?, ?)");
     $stmt->bind_param("id", $user_id, $total);
     $stmt->execute();
     $commande_id = $conn->insert_id;
 
-    // Insérer lignes
     foreach ($panier as $item) {
         $stmt = $conn->prepare("SELECT prix FROM produits WHERE id = ?");
         $stmt->bind_param("i", $item['id']);
@@ -75,4 +70,3 @@ if ($action === 'passer_commande') {
     echo json_encode(['success' => true, 'commandes' => $commandes]);
     $conn->close();
 }
-?>
