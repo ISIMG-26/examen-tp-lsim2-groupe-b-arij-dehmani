@@ -9,6 +9,15 @@ function esc(str) {
 let cart = JSON.parse(localStorage.getItem('coffeecart') || '[]');
 let activeCat = '';
 
+function logout() {
+    const fd = new FormData();
+    fd.append('action', 'deconnexion');
+    fetch('back/auth_handler.php', { method: 'POST', body: fd })
+        .then((r) => r.json())
+        .then((d) => { if (d.success) location.href = 'index.php'; else alert('Erreur de déconnexion: ' + (d.message || 'Inconnue')); })
+        .catch((e) => alert('Erreur réseau lors de la déconnexion: ' + e.message));
+}
+
 
 function saveCart() {
     localStorage.setItem('coffeecart', JSON.stringify(cart));

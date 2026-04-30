@@ -44,7 +44,7 @@ $is_admin = isAdmin();
     <div class="cart-footer">
         <div class="cart-total">
             <span>Total</span>
-            <span id="cart-total">0.00 €</span>
+            <span id="cart-total">0.00 TND</span>
         </div>
         <button class="btn-primary btn-full" id="checkout-btn" onclick="passerCommande()">Commander</button>
         <?php if (!$user_name): ?><a href="auth.php">Connectez-vous pour commander</a><?php endif; ?>

@@ -84,6 +84,8 @@ if ($action === 'inscription') {
     $conn->close();
 
 } elseif ($action === 'deconnexion') {
+    $_SESSION = [];
+    setcookie(session_name(), '', time() - 3600, '/');
     session_destroy();
     echo json_encode(['success' => true, 'redirect' => 'index.php']);
 
