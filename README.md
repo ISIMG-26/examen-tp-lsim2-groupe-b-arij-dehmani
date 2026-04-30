@@ -43,8 +43,8 @@ Fonctionnalités
 Prérequis
 
 PHP >= 7.4
-MySQL >= 5.7 ou MariaDB >= 10.3
+MySQL >= 5.7 
 Serveur web : Apache
-serbeur BDD : MySql
+
 
 
